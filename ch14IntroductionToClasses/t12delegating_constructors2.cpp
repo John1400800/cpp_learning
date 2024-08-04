@@ -29,7 +29,7 @@ public:
 };
 
 int main() {
-    printBall();
+    // printBall();
     Ball defaultBall{};
     Ball blueBall{ "blue" };
     Ball twentyBall{ 20.0 };
