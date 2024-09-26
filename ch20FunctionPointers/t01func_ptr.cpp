@@ -2,6 +2,7 @@
 #include <cstdint>
 #include <cstring>
 #include <iterator>
+#include <functional>
 #include <iostream>
 
 template <typename T>
@@ -11,8 +12,17 @@ void swap(T& first, T& second) {
     second = temp;
 }
 
+#if 0
 template <typename T>
-void selSort(T *begin, const T *end, bool (*compFunc)(const T&, const T&)) {
+using ValidateFunction = bool(*)(const T&, const T&);
+#else
+template <typename T>
+using ValidateFunction = std::function<bool(const T&, const T&)>;
+#endif
+
+template <typename T>
+void selSort(T *begin, const T *end,
+             ValidateFunction<T> compFunc=[](const T& a, const T& b){ return a > b; }) {
     for (auto startIt{begin}; startIt!=end; ++startIt) {
         auto swapElemIt{startIt};
         for (auto currIt{startIt+1}; currIt!=end; ++currIt)
@@ -41,7 +51,7 @@ std::ostream& operator<<(std::ostream& out, const char* arr) {
 int main() {
     uint32_t arr[]{ 2, 5, 3, 1, 4 };
     std::cout << arr << '\n';
-    selSort(std::begin(arr), std::end(arr), ascending);
+    selSort(std::begin(arr), std::end(arr));
     std::cout << arr << '\n';
     return EXIT_SUCCESS;
 }
