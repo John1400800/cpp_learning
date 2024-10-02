@@ -59,7 +59,6 @@ public:
         return (*this)[C];
     }
 
-    friend std::ostream& operator<<(std::ostream&, const Fraction&);
     friend std::istream& operator>>(std::istream&, Fraction&);
 private:
     std::array<frac_t, 2> comps{ 0, 1 };
@@ -102,5 +101,7 @@ Fraction operator+ (const T&, const U&);
 
 template <typename T, typename U>
 Fraction operator- (const T&, const U&);
+
+std::ostream& operator<<(std::ostream&, const Fraction&);
 
 #endif // FRAC_H
