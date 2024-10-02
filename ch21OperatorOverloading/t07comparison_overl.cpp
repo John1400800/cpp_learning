@@ -1,5 +1,6 @@
 #include <cstdlib>
 #include <cstdint>
+#include <array>
 #include <iostream>
 
 namespace utils {
@@ -26,14 +27,17 @@ namespace utils {
 }
 
 class Fraction {
-    int32_t num_{0};
-    int32_t den_{1};
 public:
-    Fraction(int32_t num=0, int32_t den=1);
+    using frac_t = int32_t;
+    enum Component : size_t {
+        Num, Den,
+        maxComponent
+    };
 
-    int32_t num() const { return num_; }
-    int32_t den() const { return den_; }
+    Fraction(frac_t num=0, frac_t den=1);
 
+    frac_t&   operator[](Component index);
+    frac_t    operator[](Component index) const;
     Fraction  operator+ () const;
     Fraction  operator- () const;
     Fraction& operator*=(const Fraction&);
@@ -42,9 +46,27 @@ public:
     Fraction& operator-=(const Fraction&);
     Fraction& operator++();
     Fraction& operator--();
+    Fraction  operator++(int32_t);
+    Fraction  operator--(int32_t);
+
+    template <Component C>
+    frac_t  get() const {
+        static_assert( C < maxComponent,
+                       "Invalid template argument! Must be 0 or 1." );
+        return (*this)[C];
+    }
+
+    template <Component C>
+    frac_t& get() {
+        static_assert( C < maxComponent,
+                       "Invalid template argument! Must be 0 or 1." );
+        return (*this)[C];
+    }
 
     friend std::ostream& operator<<(std::ostream&, const Fraction&);
     friend std::istream& operator>>(std::istream&, Fraction&);
+private:
+    std::array<frac_t, 2> comps{ 0, 1 };
 };
 
 bool     operator==(const Fraction&, const Fraction&);
@@ -77,28 +99,59 @@ int main() {
         << f1 << " <  " << f2                   << ' ' << (f1 <  f2) << '\n'
         << f1 << " >= " << f2                   << ' ' << (f1 >= f2) << '\n'
         << f1 << " <= " << f2                   << ' ' << (f1 <= f2) << '\n'
-        << "++(" << f1 << ") == ";
-    std::cout << ++f1 << '\n'
-        << "--(" << f1 << ") == ";
-    std::cout << --f1 << '\n';
+        << "++(" << f1 << ") == " << ++f1 << '\n'
+        << "--(" << f1 << ") == " << --f1 << '\n'
+        << "(" << f1 << ")++ == " << f1++ << ", f == " << f1 << '\n'
+        << "(" << f1 << ")-- == " << f1-- << ", f == " << f1 << '\n';
     return EXIT_SUCCESS;
 }
 
-Fraction::Fraction(int32_t num, int32_t den)
-    : num_{num}, den_{den}
+Fraction::Fraction(Fraction::frac_t num, Fraction::frac_t den)
+    : comps{num, den}
 {
-    if (den_ == 0)
+    if (den == 0)
         throw std::invalid_argument("denumerator cannotbe zero.");
 }
 
+template <>
+Fraction::frac_t Fraction::get<Fraction::Num>() const {
+    return (*this)[Fraction::Num];
+}
+
+template <>
+Fraction::frac_t Fraction::get<Fraction::Den>() const {
+    return (*this)[Fraction::Den];
+}
+
+template <>
+Fraction::frac_t& Fraction::get<Fraction::Num>() {
+    return (*this)[Fraction::Num];
+}
+
+template <>
+Fraction::frac_t& Fraction::get<Fraction::Den>() {
+    return (*this)[Fraction::Den];
+}
+
+
+Fraction::frac_t& Fraction::operator[](Fraction::Component index) {
+    return comps[index];
+}
+
+Fraction::frac_t Fraction::operator[](Fraction::Component index) const {
+    return comps[index];
+}
+
 bool operator==(const Fraction& f1, const Fraction& f2) {
-    return f1.num() * f2.den() == f2.num() * f1.den();
+    return f1.get<Fraction::Num>() * f2.get<Fraction::Den>()
+        == f2.get<Fraction::Num>() * f1.get<Fraction::Den>();
 }
 bool operator!=(const Fraction& f1, const Fraction& f2) {
     return !(f1 == f2);
 }
 bool operator> (const Fraction& f1, const Fraction& f2) {
-    return f1.num() * f2.den() > f2.num() * f1.den();
+    return f1.get<Fraction::Num>() * f2.get<Fraction::Den>()
+        > f2.get<Fraction::Num>() * f1.get<Fraction::Den>();
 }
 bool operator< (const Fraction& f1, const Fraction& f2) {
     return f2 > f1;
@@ -115,8 +168,8 @@ Fraction  Fraction::operator+ () const {
 }                                     
                                       
 Fraction  Fraction::operator- () const {
-    return Fraction{ -num(),
-                      den() };
+    return Fraction{ -get<Fraction::Num>(),
+                      get<Fraction::Den>() };
 }
 
 Fraction& Fraction::operator++() {
@@ -125,6 +178,18 @@ Fraction& Fraction::operator++() {
 
 Fraction& Fraction::operator--() {
     return *this -= 1;
+}
+
+Fraction Fraction::operator++(int32_t) {
+    return ++*this - 1; // Fraction temp{*this};
+                        // ++*this;
+                        // return temp;
+}
+
+Fraction Fraction::operator--(int32_t) {
+    return --*this + 1; // Fraction temp{*this};
+                        // --*this;
+                        // return temp;
 }
 
 Fraction& Fraction::operator*=(const Fraction& other) {
@@ -144,19 +209,20 @@ Fraction& Fraction::operator-=(const Fraction& other) {
 }
 
 Fraction operator*(const Fraction& f1, const Fraction& f2) {
-    return Fraction{ f1.num() * f2.num(),
-                     f1.den() * f2.den() };
+    return Fraction{ f1.get<Fraction::Num>() * f2.get<Fraction::Num>(),
+                     f1.get<Fraction::Den>() * f2.get<Fraction::Den>() };
 }
 
 Fraction operator/ (const Fraction& f1, const Fraction& f2) {
-    return Fraction{ f1.num() * f2.den(),
-                     f1.den() * f2.num() };
+    return Fraction{ f1.get<Fraction::Num>() * f2.get<Fraction::Den>(),
+                     f1.get<Fraction::Den>() * f2.get<Fraction::Num>() };
 }
 
 Fraction operator+(const Fraction& f1, const Fraction& f2) {
-    int32_t lcm{ utils::lcm(f1.den(), f2.den()) };
-    return Fraction{ f1.num() * lcm / f1.den() + f2.num() * lcm / f2.den(),
-                     lcm };
+    Fraction::frac_t lcm{ utils::lcm(f1.get<Fraction::Den>(), f2.get<Fraction::Den>()) };
+    return Fraction{ (f1.get<Fraction::Num>() * lcm / f1.get<Fraction::Den>()
+                      + f2.get<Fraction::Num>() * lcm / f2.get<Fraction::Den>())
+                    , lcm };
 }
 
 Fraction operator-(const Fraction& f1, const Fraction& f2) {
@@ -164,18 +230,19 @@ Fraction operator-(const Fraction& f1, const Fraction& f2) {
 }
 
 std::ostream& operator<<(std::ostream& out, const Fraction& frac) {
-    if (frac.num_ == 0)
+    if (frac.get<Fraction::Num>() == 0)
         return out << 0;
-    int32_t f_gcd{ utils::gcd(frac.num_, frac.den_) };
-    if (frac.den_ == f_gcd)
-        return out << frac.num_ / f_gcd;
-    if (frac.den_ * f_gcd < 0)
+    Fraction::frac_t f_gcd{ utils::gcd(frac.get<Fraction::Num>(), frac.get<Fraction::Den>()) };
+    if (frac.get<Fraction::Den>() == f_gcd)
+        return out << frac.get<Fraction::Num>() / f_gcd;
+    if (frac.get<Fraction::Den>() * f_gcd < 0)
         f_gcd = -f_gcd;
-    return out << frac.num_ / f_gcd
-        << "/" << frac.den_ / f_gcd;
+    return out << frac.get<Fraction::Num>() / f_gcd
+        << "/" << frac.get<Fraction::Den>() / f_gcd;
 }
+
 std::istream& operator>>(std::istream& in, Fraction& frac) {
-    int32_t newNum, newDen;
+    Fraction::frac_t newNum, newDen;
     char delim;
     in >> newNum >> delim >> newDen;
     if (in && delim == '/')
