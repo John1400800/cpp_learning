@@ -28,9 +28,13 @@ public:
 
     Fraction(frac_t num=0, frac_t den=1);
 
-    frac_t    operator[](Component index) const;
+    const frac_t&   operator[](Component index) const;
     Fraction  operator+ () const;
     Fraction  operator- () const;
+
+    explicit operator int32_t() const;
+    operator bool()             const;
+    operator double()           const;
 
     template <typename T>
     Fraction& operator*=(const T&);
@@ -69,12 +73,23 @@ private:
     }
 };
 
-bool     operator==(const Fraction&, const Fraction&);
-bool     operator!=(const Fraction&, const Fraction&);
-bool     operator> (const Fraction&, const Fraction&);
-bool     operator< (const Fraction&, const Fraction&);
-bool     operator>=(const Fraction&, const Fraction&);
-bool     operator<=(const Fraction&, const Fraction&);
+template <typename T, typename U>
+bool     operator==(const T&, const U&);
+
+template <typename T, typename U>
+bool     operator!=(const T&, const U&);
+
+template <typename T, typename U>
+bool     operator> (const T&, const U&);
+
+template <typename T, typename U>
+bool     operator< (const T&, const U&);
+
+template <typename T, typename U>
+bool     operator>=(const T&, const U&);
+
+template <typename T, typename U>
+bool     operator<=(const T&, const U&);
 
 template <typename T, typename U>
 Fraction operator* (const T&, const U&);

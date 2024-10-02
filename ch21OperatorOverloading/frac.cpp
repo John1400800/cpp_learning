@@ -1,6 +1,7 @@
 #include <cstdlib>
 #include <cstdint>
 #include <array>
+#include <utility>
 #include <iostream>
 #include "frac.hpp"
 
@@ -30,12 +31,11 @@ namespace utils {
     }
 }
 
-
 Fraction::frac_t& Fraction::operator[](Fraction::Component index) {
-    return comps[index];
+    return const_cast<Fraction::frac_t&>(std::as_const(*this)[index]);
 }
 
-Fraction::frac_t Fraction::operator[](Fraction::Component index) const {
+const Fraction::frac_t& Fraction::operator[](Fraction::Component index) const {
     return comps[index];
 }
 
@@ -175,27 +175,117 @@ Fraction& Fraction::operator-=(const Fraction::frac_t& other) {
     return *this = *this - other;
 }
 
+template <>
 bool operator==(const Fraction& f1, const Fraction& f2) {
     return f1.get<Fraction::Num>() * f2.get<Fraction::Den>()
         == f2.get<Fraction::Num>() * f1.get<Fraction::Den>();
 }
+
+template <>
+bool operator==(const Fraction& f1, const Fraction::frac_t& f2) {
+    return f1.get<Fraction::Num>() == f2 * f1.get<Fraction::Den>();
+}
+
+template <>
+bool operator==(const Fraction::frac_t& f1, const Fraction& f2) {
+    return f2 == f1;
+}
+
+template <>
 bool operator!=(const Fraction& f1, const Fraction& f2) {
     return !(f1 == f2);
 }
+
+template <>
+bool operator!=(const Fraction& f1, const Fraction::frac_t& f2) {
+    return !(f1 == f2);
+}
+
+template <>
+bool operator!=(const Fraction::frac_t& f1, const Fraction& f2) {
+    return !(f1 == f2);
+}
+
+template <>
 bool operator> (const Fraction& f1, const Fraction& f2) {
+    if (f1.get<Fraction::Den>() * f2.get<Fraction::Den>() < 0)
+        return f1.get<Fraction::Num>() * f2.get<Fraction::Den>()
+            < f2.get<Fraction::Num>() * f1.get<Fraction::Den>();
     return f1.get<Fraction::Num>() * f2.get<Fraction::Den>()
         > f2.get<Fraction::Num>() * f1.get<Fraction::Den>();
 }
+
+template <>
+bool operator> (const Fraction& f1, const Fraction::frac_t& f2) {
+    if (f1.get<Fraction::Den>() < 0)
+        return f1.get<Fraction::Num>() < f2 * f1.get<Fraction::Den>();
+    return f1.get<Fraction::Num>() > f2 * f1.get<Fraction::Den>();
+}
+
+template <>
+bool operator> (const Fraction::frac_t& f1, const Fraction& f2) {
+    if (f2.get<Fraction::Den>() < 0)
+        return f1 * f2.get<Fraction::Den>() < f2.get<Fraction::Num>();
+    return f1 * f2.get<Fraction::Den>() > f2.get<Fraction::Num>();
+}
+
+template <>
 bool operator< (const Fraction& f1, const Fraction& f2) {
     return f2 > f1;
 }
+
+template <>
+bool operator< (const Fraction& f1, const Fraction::frac_t& f2) {
+    return f2 > f1;
+}
+
+template <>
+bool operator< (const Fraction::frac_t& f1, const Fraction& f2) {
+    return f2 > f1;
+}
+
+template <>
 bool operator>=(const Fraction& f1, const Fraction& f2) {
     return !(f1 < f2);
 }
+
+template <>
+bool operator>=(const Fraction& f1, const Fraction::frac_t& f2) {
+    return !(f1 < f2);
+}
+
+template <>
+bool operator>=(const Fraction::frac_t& f1, const Fraction& f2) {
+    return !(f1 < f2);
+}
+
+template <>
 bool operator<=(const Fraction& f1, const Fraction& f2) {
     return !(f1 > f2);
 }
 
+template <>
+bool operator<=(const Fraction& f1, const Fraction::frac_t& f2) {
+    return !(f1 > f2);
+}
+
+template <>
+bool operator<=(const Fraction::frac_t& f1, const Fraction& f2) {
+    return !(f1 > f2);
+}
+
+Fraction::operator int32_t() const {
+    return Fraction::get<Fraction::Num>() / Fraction::get<Fraction::Den>();
+}
+
+Fraction::operator double() const {
+    return static_cast<double>(Fraction::get<Fraction::Num>())
+        / Fraction::get<Fraction::Den>();
+}
+
+Fraction::operator bool() const {
+    return Fraction::get<Fraction::Num>();
+}
 Fraction  Fraction::operator+ () const {
     return *this;                     
 }                                     
