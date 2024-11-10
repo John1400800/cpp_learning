@@ -5,7 +5,7 @@
 #include <string_view>
 #include <iostream>
 
-bool askYesNo(std::string_view question);
+bool askYesNo(std::string_view question, std::ostream& =std::cout, std::istream& =std::cin);
 
 int main(int32_t, const char**) {
     bool answer{ askYesNo("just answer") };
@@ -13,22 +13,21 @@ int main(int32_t, const char**) {
     return EXIT_SUCCESS;
 }
 
-bool askYesNo(std::string_view question) {
-    std::string answer;
+bool askYesNo(std::string_view question, std::ostream& out, std::istream& in) {
+    char answer{};
     while (true) {
-        if (std::cin.fail()) {
-            std::cin.clear();
-            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+        out << question << " (y/n): ";
+        in >> answer;
+        if (in.fail())
+            in.clear();
+        else
+            switch (tolower(answer)) {
+            case 'y':
+                return true;
+            case 'n':
+                return false;
         }
-        std::cout << question << " (y/n): ";
-        std::cin >> answer;
-        if (answer.length() == 1)
-            switch (tolower(answer[0])) {
-                case 'y':
-                    return true;
-                case 'n':
-                    return false;
-            }
-        std::cout << "Invalid input: " << answer << " Please enter 'y' for yes or 'n' for no.\n";
+        in.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+        out << "Invalid input. Please enter 'y' for yes or 'n' for no.\n";
     }
 }
