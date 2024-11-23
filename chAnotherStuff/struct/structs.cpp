@@ -1,4 +1,3 @@
-// #include <cstdlib>      // for EXIT_SUCCESS
 #include <cstdint>      // for uint32_t e.g
 #include <cassert>      // for assert
 #include <initializer_list> // for self
