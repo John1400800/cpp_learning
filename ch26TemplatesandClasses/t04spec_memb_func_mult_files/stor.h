@@ -1,6 +1,7 @@
 // stor.h
 #ifndef STORAGE_H
 #define STORAGE_H
+#include <ostream>
 template <typename T>
 class Storage {
     T value{};
